@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>เข้าสู่ระบบ | งานสารบรรณ</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Tahoma, sans-serif;
+            background: linear-gradient(135deg, #ff512f, #f09819);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            background: #fff;
+            width: 380px;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+        }
+
+        .login-box h2 {
+            text-align: center;
+            margin-bottom: 10px;
+            color: #e65100;
+        }
+
+        .login-box p {
+            text-align: center;
+            font-size: 14px;
+            color: #777;
+            margin-bottom: 25px;
+        }
+
+        label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 16px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #e65100;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #bf360c;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="login-box">
+    <h2>🔐 ระบบสารบรรณ</h2>
+    <p>สโมสรนักศึกษาอุทยานเทคโนโลยี มจพ.</p>
+
+    <label>อีเมล</label>
+    <input type="email" id="email" placeholder="example@email.com">
+
+    <label>รหัสผ่าน</label>
+    <input type="password" id="password" placeholder="••••••••">
+
+    <label>ตำแหน่ง</label>
+    <select id="role">
+        <option value="">-- เลือกตำแหน่ง --</option>
+        <option value="committee">กรรมการ</option>
+        <option value="head">หัวหน้าฝ่าย</option>
+        <option value="vice">รองนายก</option>
+        <option value="president">นายก</option>
+        <option value="staff">เจ้าหน้าที่สารบรรณ</option>
+    </select>
+
+    <button onclick="login()">เข้าสู่ระบบ</button>
+
+    <div class="footer">
+        © สโมสรนักศึกษาอุทยานเทคโนโลยี มจพ.
+    </div>
+</div>
+
+<script>
+/* =========================
+   ฐานข้อมูลผู้ใช้จำลอง
+========================= */
+const users = [
+    { email: "committee@test.com", password: "1234", role: "committee" },
+    { email: "head@test.com", password: "1234", role: "head" },
+    { email: "vice@test.com", password: "1234", role: "vice" },
+    { email: "president@test.com", password: "1234", role: "president" },
+    { email: "staff@test.com", password: "1234", role: "staff" }
+];
+
+/* =========================
+   Login
+========================= */
+function login() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const role = document.getElementById("role").value;
+
+    if (!email || !password || !role) {
+        alert("กรุณากรอกข้อมูลให้ครบ");
+        return;
+    }
+
+    const foundUser = users.find(
+        u => u.email === email && u.password === password && u.role === role
+    );
+
+    if (!foundUser) {
+        alert("อีเมล รหัสผ่าน หรือ ตำแหน่ง ไม่ถูกต้อง");
+        return;
+    }
+
+    localStorage.setItem("email", foundUser.email);
+    localStorage.setItem("role", foundUser.role);
+
+    window.location.href = "document.html";
+}
+</script>
+
+</body>
+</html>

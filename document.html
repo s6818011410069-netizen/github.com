@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>งานสารบรรณ | สโมสรนักศึกษาอุทยานเทคโนโลยี มจพ.</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="header">
+    <img src="logo.png" alt="โลโก้ มจพ." class="logo">
+    <div class="header-text">
+        <h1>งานสารบรรณ สโมสรนักศึกษาอุทยานเทคโนโลยี</h1>
+        <p>มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าพระนครเหนือ</p>
+    </div>
+</header>
+
+<nav>
+    <a href="index.html">หน้าแรก</a>
+    <a href="document.html" class="active">งานสารบรรณ</a>
+    <a href="download.html">ดาวน์โหลด</a>
+    <a href="announce.html">ประกาศ</a>
+    <a href="contact.html">ติดต่อ</a>
+</nav>
+
+<div class="user-bar">
+    <span id="userEmail"></span>
+    <span id="userRole"></span>
+    <button onclick="logout()">ออกจากระบบ</button>
+</div>
+
+<main>
+    <h2>สถานะเอกสารล่าสุด</h2>
+    <p id="docStatusText">สถานะเอกสาร: -</p>
+    <p id="docNumberText">เลขสารบรรณ: -</p>
+    <p id="docLog"></p>
+
+    <!-- Timeline -->
+    <div class="timeline">
+        <div class="step" id="step-request">📄 ขอเลข</div>
+        <div class="line"></div>
+        <div class="step" id="step-vice">✅ รองนายก</div>
+        <div class="line"></div>
+        <div class="step" id="step-president">🖋️ นายก</div>
+    </div>
+
+    <hr>
+
+    <!-- การทำรายการ -->
+    <div id="actionButtons">
+        <label><b>เรื่องหนังสือ</b></label><br>
+        <input type="text" id="docTitleInput" placeholder="กรอกเรื่องหนังสือ" style="width:60%;">
+        <br><br>
+
+        <button id="btnRequest" onclick="updateStatus('request')">📄 ขอเลขสารบรรณ</button>
+        <button id="btnVice" onclick="updateStatus('vice')">✅ เสนอรองนายก</button>
+        <button id="btnPresident" onclick="updateStatus('president')">🖋️ อนุมัตินายก</button>
+    </div>
+
+    <hr>
+
+    <h2>ทะเบียนรับหนังสือ</h2>
+    <table border="1" width="100%">
+        <thead>
+            <tr>
+                <th>ลำดับ</th>
+                <th>เลขสารบรรณ</th>
+                <th>เรื่อง</th>
+                <th>สถานะ</th>
+                <th>ดำเนินการโดย</th>
+                <th>เวลา</th>
+            </tr>
+        </thead>
+        <tbody id="docTableBody"></tbody>
+    </table>
+</main>
+
+<footer>
+    <p>© สโมสรนักศึกษาอุทยานเทคโนโลยี มจพ.</p>
+</footer>
+
+<script>
+/* ======================
+   ตรวจสอบล็อกอิน
+====================== */
+const email = localStorage.getItem("email");
+const role = localStorage.getItem("role");
+
+if (!email || !role) {
+    alert("กรุณาเข้าสู่ระบบก่อน");
+    location.href = "login.html";
+}
+
+document.getElementById("userEmail").innerText = "ผู้ใช้งาน: " + email;
+document.getElementById("userRole").innerText = " | สิทธิ์: " + role;
+
+/* ======================
+   คลังเอกสารทั้งหมด
+====================== */
+let documents = JSON.parse(localStorage.getItem("documents")) || [];
+
+/* ======================
+   โหลดเอกสารลงตาราง
+====================== */
+function loadDocuments() {
+    const tbody = document.getElementById("docTableBody");
+    tbody.innerHTML = "";
+
+    if (documents.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align:center;">ยังไม่มีเอกสาร</td>
+            </tr>`;
+        return;
+    }
+
+    documents.forEach((doc, index) => {
+        tbody.innerHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${doc.number}</td>
+                <td>${doc.title}</td>
+                <td>${doc.status}</td>
+                <td>${doc.by}</td>
+                <td>${doc.time}</td>
+            </tr>`;
+    });
+}
+
+/* ======================
+   หาเอกสารที่ต้องดำเนินการ
+====================== */
+function getActiveDocumentIndex() {
+    if (role === "vice") {
+        return documents.findIndex(d => d.status === "รอเสนอรองนายก");
+    }
+    if (role === "president") {
+        return documents.findIndex(d => d.status === "รออนุมัตินายก");
+    }
+    return documents.length - 1;
+}
+
+/* ======================
+   อัปเดตสถานะ
+====================== */
+function updateStatus(step) {
+
+    // ===== ขอเลข =====
+    if (step === "request") {
+
+        if (!(role === "committee" || role === "head")) {
+            alert("เฉพาะกรรมการหรือหัวหน้าฝ่าย");
+            return;
+        }
+
+        const title = docTitleInput.value.trim();
+        if (!title) {
+            alert("กรุณากรอกเรื่องหนังสือ");
+            return;
+        }
+
+        const year = 2569;
+        let running = parseInt(localStorage.getItem("docRunning") || "0") + 1;
+        localStorage.setItem("docRunning", running);
+
+        const runningText = running.toString().padStart(2, "0");
+        const docNumber = `สม.อทย.รย.${runningText}/${year}`;
+
+        documents.push({
+            number: docNumber,
+            title: title,
+            status: "รอเสนอรองนายก",
+            by: email,
+            time: new Date().toLocaleString("th-TH")
+        });
+    }
+
+    // ===== รองนายก =====
+    if (step === "vice") {
+        if (role !== "vice") return alert("เฉพาะรองนายก");
+
+        const index = getActiveDocumentIndex();
+        if (index === -1) return alert("ไม่มีเอกสารรอรองนายก");
+
+        documents[index].status = "รออนุมัตินายก";
+        documents[index].by = email;
+        documents[index].time = new Date().toLocaleString("th-TH");
+    }
+
+    // ===== นายก =====
+    if (step === "president") {
+        if (role !== "president") return alert("เฉพาะนายก");
+
+        const index = getActiveDocumentIndex();
+        if (index === -1) return alert("ไม่มีเอกสารรอนายก");
+
+        documents[index].status = "อนุมัติเรียบร้อย";
+        documents[index].by = email;
+        documents[index].time = new Date().toLocaleString("th-TH");
+    }
+
+    localStorage.setItem("documents", JSON.stringify(documents));
+    updateDisplay();
+    loadDocuments();
+}
+
+/* ======================
+   แสดงผล + Timeline
+====================== */
+function updateDisplay() {
+
+    if (documents.length === 0) return;
+
+    const index = getActiveDocumentIndex();
+    if (index === -1) return;
+
+    const doc = documents[index];
+
+    document.getElementById("docStatusText").innerText =
+        "สถานะเอกสาร: " + doc.status;
+
+    document.getElementById("docNumberText").innerText =
+        "เลขสารบรรณ: " + doc.number;
+
+    document.getElementById("docLog").innerText =
+        "ดำเนินการโดย: " + doc.by + " | เวลา: " + doc.time;
+
+    document.querySelectorAll(".step")
+        .forEach(step => step.classList.remove("active"));
+
+    if (doc.status === "รอเสนอรองนายก") {
+        step-request.classList.add("active");
+    }
+    if (doc.status === "รออนุมัตินายก") {
+        step-request.classList.add("active");
+        step-vice.classList.add("active");
+    }
+    if (doc.status === "อนุมัติเรียบร้อย") {
+        step-request.classList.add("active");
+        step-vice.classList.add("active");
+        step-president.classList.add("active");
+    }
+}
+
+/* โหลดตอนเปิดหน้า */
+loadDocuments();
+updateDisplay();
+</script>
+}
+<script>
+/* ======================
+   ออกจากระบบ
+====================== */
+function logout() {
+    if (confirm("ต้องการออกจากระบบใช่หรือไม่")) {
+        localStorage.removeItem("email");
+        localStorage.removeItem("role");
+        location.href = "login.html";
+    }
+}
+</script>
+</script>
+
+</body>
+</html>
